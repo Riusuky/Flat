@@ -1,6 +1,6 @@
 # Flat (VERY Early Development Stage!)
 
-Flat is a 2D game engine originally created for coding practicing purposes. It should handle all the basic aspects of a 2D game, such as `resources`, `terrain` and `objects`.
+Flat is a 2D game engine originally created for coding practicing purposes. It neither tries to be the best nor the most innovative one. It simply wants to provide a initial base structure for 2D game development.
 
 ## Getting Started
 
@@ -10,7 +10,7 @@ The project uses the task runner [Gulp](http://gulpjs.com/) ([`gulpfile.js`](gul
 
 To install all dependencies just run `npm install` where the `package.json` file is located.
 
-To generate the `flatengine.min.js` lib file, run `gulp` where the `gulpfile.js` file is located.
+To generate the `flat-engine.min.js` lib file, run `gulp` where the `gulpfile.js` file is located.
 
 ## Documentation
 
