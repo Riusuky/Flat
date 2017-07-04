@@ -25,6 +25,8 @@ class ImageResource {
     setProgress(progress) {
         this.progress = progress;
 
+        console.log(`ImageResource.setProgress: ${progress}`);
+
         if(this.onProgress) {
             this.onProgress(this.progress);
         }
@@ -48,7 +50,7 @@ class ImageResource {
             break;
 
             case ImageResourceStatus.LOADED:
-            this.progress = 1;
+            this.setProgress(1);
             if(this.onLoad) {
                 this.onLoad();
             }
@@ -83,6 +85,7 @@ class ImageResource {
         if(source) {
             if(source instanceof Image) {
                 if(source.src) {
+                    this.imageSrc = source.src;
                     this.img = source;
 
                     if(source.completed) {
@@ -97,6 +100,7 @@ class ImageResource {
                 }
             }
             else if(typeof source == 'string') {
+                this.imageSrc = source;
                 this.img = new Image();
 
                 this.setTriggers();
@@ -159,7 +163,12 @@ class Resources {
         const promises = [];
 
         for(const aguments of sources) {
-            promises.push(this.addImage.apply(this, aguments));
+            if(arguments instanceof Array) {
+                promises.push(this.addImage.apply(this, aguments));
+            }
+            else {
+                promises.push(this.addImage(aguments));
+            }
         }
 
         return Promise.all(promises);

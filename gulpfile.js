@@ -29,7 +29,7 @@ const BASE_PATHS = {
 };
 
 const PATHS = {
-    JS_DEPENDENCIES: [], //'backbone/backbone-min.js', 'underscore/underscore-min.js', 'jquery/dist/jquery.min.js'
+    JS_DEPENDENCIES: ['underscore/underscore-min.js'], //'backbone/backbone-min.js', 'underscore/underscore-min.js', 'jquery/dist/jquery.min.js'
     JS: ['classes/*.js', '*.js']
 };
 

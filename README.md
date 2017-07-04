@@ -16,9 +16,15 @@ To generate the `flat-engine.min.js` lib file, run `gulp` where the `gulpfile.js
 
 Still a TODO...
 
-##Contribution
+## Contribution
 
 If you are willing to join me in this code practice and want to improve the engine, please, feel yourself being encouraged to do so.
+
+## Dependencies
+
+* [Underscore.js](http://underscorejs.org)
+
+**Note**: Dependencies must be loaded before the Flat library.
 
 ## License
 
