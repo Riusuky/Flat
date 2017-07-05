@@ -90,4 +90,9 @@ class Terrain {
 
         return null;
     }
+
+    clear() {
+        this.tileMap.clear();
+        this.tileHighlightMap = new Map();
+    }
 }

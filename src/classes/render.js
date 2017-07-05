@@ -138,6 +138,18 @@ class Render {
         }
     }
 
+    unregisterObject(imageObject) {
+        if(!ImageObject) {
+            console.error('Render.registerObject: ImageObject class is not defined.');
+        }
+        else if(!(imageObject instanceof ImageObject)) {
+            console.error('Render.registerObject: imageObject is not a ImageObject object.');
+        }
+        else {
+            this.objectSet.delete(imageObject);
+        }
+    }
+
     setTerrain(terrain) {
         if(!Terrain) {
             console.error('Render.setTerrain: Terrain class is not defined.');
@@ -205,22 +217,24 @@ class Render {
         this.context2D.lineWidth = 2;
 
         for(const objectToRender of _.sortBy([...this.objectSet], 'layer')) {
-            objectSize = objectToRender.size;
-            this.context2D.drawImage(
-                objectToRender.sprite,
-                (realOrigin[0] + objectToRender.x - objectToRender.pivotX*objectSize[0]).toFixed(),
-                (realOrigin[1] - (objectToRender.y + (1 - objectToRender.pivotY)*objectSize[1])).toFixed(),
-                (objectSize[0]).toFixed(),
-                (objectSize[1]).toFixed()
-            );
+            if(objectToRender.mayRender()) {
+                objectSize = objectToRender.size;
+                this.context2D.drawImage(
+                    objectToRender.sprite,
+                    (realOrigin[0] + objectToRender.x - objectToRender.pivotX*objectSize[0]).toFixed(),
+                    (realOrigin[1] - (objectToRender.y + (1 - objectToRender.pivotY)*objectSize[1])).toFixed(),
+                    (objectSize[0]).toFixed(),
+                    (objectSize[1]).toFixed()
+                );
 
-            if(this.drawBorders) {
-                if(!GameObject) {
-                    console.error('Render.renderObjects: GameObject class not defined.');
-                }
-                else if((objectToRender instanceof GameObject)) {
-                    objectBorder = objectToRender.border;
-                    this.context2D.strokeRect(realOrigin[0] + objectBorder.left, realOrigin[1] - objectBorder.top, objectToRender.borderWidth, objectToRender.borderHeight);
+                if(this.drawBorders) {
+                    if(!GameObject) {
+                        console.error('Render.renderObjects: GameObject class not defined.');
+                    }
+                    else if((objectToRender instanceof GameObject)) {
+                        objectBorder = objectToRender.border;
+                        this.context2D.strokeRect(realOrigin[0] + objectBorder.left, realOrigin[1] - objectBorder.top, objectToRender.borderWidth, objectToRender.borderHeight);
+                    }
                 }
             }
         }

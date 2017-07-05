@@ -6,14 +6,8 @@ class ImageObject {
     * @constructor
     */
     constructor(sprite, subscribeToRender = true) {
-        if(sprite instanceof Image) {
-            this.sprite = sprite;
-
-            this.originalsizeX = sprite.width;
-            this.originalsizeY = sprite.height;
-        }
-        else if(sprite) {
-            console.error('GameObject.constructor: sprite is not set as a Image object.');
+        if(sprite) {
+            this.setSprite(sprite);
         }
 
         this.pivotX = 0.5;
@@ -30,15 +24,18 @@ class ImageObject {
 
         this.layer = 0;
 
-        if(subscribeToRender) {
-            if(!Render) {
-                console.error('ImageObject.constructor: Render class is not defined.');
-            }
-            else if(!(Render.instance instanceof Render)) {
-                console.error('ImageObject.constructor: There is no render instance to subscribre to.');
-            }
-            else {
-                Render.instance.registerObject(this);
+        this.visible = true;
+
+        if(!Render) {
+            console.error('ImageObject.constructor: Render class is not defined.');
+        }
+        else if(!(Render.instance instanceof Render)) {
+            console.error('ImageObject.constructor: There is no render instance to subscribre to.');
+        }
+        else {
+            this.render = Render.instance;
+            if(subscribeToRender) {
+                this.subscribeToRender();
             }
         }
     }
@@ -114,6 +111,61 @@ class ImageObject {
             console.error('set ImageObject.scale: scale is not an array of size 2 that contains numbers or simply a number.');
         }
     }
+
+    mayRender() {
+        return (this.sprite instanceof Image) && this.visible;
+    }
+
+    setSprite(sprite, adjustSize = true) {
+        if(sprite instanceof Image) {
+            this.sprite = sprite;
+
+            if(adjustSize) {
+                this.originalsizeX = sprite.naturalWidth;
+                this.originalsizeY = sprite.naturalHeight;
+            }
+        }
+        else if(sprite) {
+            console.error('GameObject.constructor: sprite is not set as a Image object.');
+        }
+        else {
+            this.sprite = null;
+        }
+    }
+
+    subscribeToRender() {
+        this.render.registerObject(this);
+    }
+
+    unsubscribeToRender() {
+        this.render.unregisterObject(this);
+    }
+
+    createCopy() {
+        const newCopy = new ImageObject(this.sprite, false);
+
+        this.copyPropertiesTo(newCopy);
+
+        return newCopy;
+    }
+
+    copyPropertiesTo(targetImageObject) {
+        if((targetImageObject instanceof ImageObject)) {
+            targetImageObject.sprite = this.sprite;
+
+            targetImageObject.pivot = [this.pivotX, this.pivotY];
+            targetImageObject.position = [this.x, this.y];
+
+            targetImageObject.originalsize = [this.originalsizeX, this.originalsizeY];
+
+            targetImageObject.scale = [this.scaleX, this.scaleY];
+
+            targetImageObject.layer = this.layer;
+        }
+        else {
+            console.error('ImageObject.copyPropertiesTo: targetImageObject is not a ImageObject instance.');
+        }
+    }
 }
 
 /**
@@ -182,5 +234,28 @@ class GameObject extends ImageObject {
         var myBorder = this.border;
 
         return (Math.min(myBorder.right, otherBorder.right) - Math.max(myBorder.left, otherBorder.left) >= 0) && (Math.min(myBorder.bottom, otherBorder.bottom) - Math.max(myBorder.top, otherBorder.top) >= 0);
+    }
+
+    createCopy() {
+        const newCopy = new GameObject(this.sprite, false);
+
+        this.copyPropertiesTo(newCopy);
+
+        return newCopy;
+    }
+
+    copyPropertiesTo(targetGameObject) {
+        if((targetGameObject instanceof GameObject)) {
+            super.copyPropertiesTo(targetGameObject);
+
+            targetGameObject.vx = this.vx;
+            targetGameObject.vy = this.vy;
+
+            targetGameObject.originalBorderWidth = this.originalBorderWidth;
+            targetGameObject.originalBorderHeight = this.originalBorderHeight;
+        }
+        else {
+            console.error('GameObject.copyPropertiesTo: targetGameObject is not a GameObject instance.');
+        }
     }
 }

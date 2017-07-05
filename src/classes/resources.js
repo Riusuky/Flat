@@ -81,15 +81,23 @@ class ImageResource {
         }
     }
 
-    setSource(source) {
+    setSource(source, alias) {
         if(source) {
             if(source instanceof Image) {
                 if(source.src) {
+                    if(alias) {
+                        this.alias = alias;
+                    }
+
                     this.imageSrc = source.src;
                     this.img = source;
 
-                    if(source.completed) {
+                    if(source.complete) {
                         this.setStatus(ImageResourceStatus.LOADED);
+
+                        return new Promise((resolve, reject) => {
+                            resolve(this);
+                        });
                     }
                     else {
                         this.setTriggers();
@@ -100,6 +108,10 @@ class ImageResource {
                 }
             }
             else if(typeof source == 'string') {
+                if(alias) {
+                    this.alias = alias;
+                }
+
                 this.imageSrc = source;
                 this.img = new Image();
 
@@ -145,7 +157,7 @@ class Resources {
             this.imageCache.set(alias, newImageResource);
         }
 
-        return newImageResource.setSource(imgSource);
+        return newImageResource.setSource(imgSource, alias);
     }
 
     /**
@@ -162,12 +174,58 @@ class Resources {
 
         const promises = [];
 
-        for(const aguments of sources) {
-            if(arguments instanceof Array) {
-                promises.push(this.addImage.apply(this, aguments));
+        for(const entry of sources) {
+            if(entry instanceof Array) {
+                promises.push(this.addImage.apply(this, entry));
             }
             else {
-                promises.push(this.addImage(aguments));
+                promises.push(this.addImage(entry));
+            }
+        }
+
+        return Promise.all(promises);
+    }
+
+    getOrAddImage(imgSource, alias) {
+        if( (typeof imgSource == 'string') && !alias ) {
+            alias = imgSource;
+        }
+
+        const newImageResource = new ImageResource();
+
+        if(!alias) {
+            console.log('Resources.addImage: alias not set and thus this image will not be cached!');
+        }
+        else {
+            const cache = this.imageCache.get(alias);
+
+            if(cache) {
+                return new Promise((resolve, reject) => {
+                    resolve(cache);
+                });
+            }
+        }
+
+        this.imageCache.set(alias, newImageResource);
+
+        return newImageResource.setSource(imgSource, alias);
+    }
+
+    getOrAddImages(sources) {
+        if(!(sources instanceof Array)) {
+            console.error('Resources.addImages: argument is not an array');
+
+            return;
+        }
+
+        const promises = [];
+
+        for(const entry of sources) {
+            if(entry instanceof Array) {
+                promises.push(this.getOrAddImage.apply(this, entry));
+            }
+            else {
+                promises.push(this.getOrAddImage(entry));
             }
         }
 
