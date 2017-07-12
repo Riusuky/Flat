@@ -51,8 +51,15 @@ render.drawTileGrid = true;
 render.drawBorders = true;
 render.drawTileHighlight = true;
 
-resources.addImages(['img/grass.jpg', 'img/tree.png']).then(result => {
+resources.addImages(['img/grass.jpg', 'img/tree.png', 'img/char.png']).then(result => {
     const tree = new GameObject(result[1].img);
+
+    const player = new Player(result[2].img);
+    player.x = 80;
+    player.scale = 0.1;
+    player.pivot = [0.5, 0.15];
+    player.originalBorder = [350, 200];
+
     tree.pivot = [0.5, 0.1];
     tree.originalBorder = [250, 120];
 

@@ -175,7 +175,7 @@ class GameObject extends ImageObject {
     /**
     * @constructor
     */
-    constructor(sprite, subscribeToRender = true) {
+    constructor(sprite, subscribeToRender = true, subscribreToEngine = true) {
         super(sprite, subscribeToRender);
 
         this.vx = 0;
@@ -183,18 +183,35 @@ class GameObject extends ImageObject {
 
         this.originalBorderWidth = this.originalsizeX || 64;
         this.originalBorderHeight = this.originalsizeY || 64;
-        // // Box colider
-        // this.boxColliderSize = [0, 0];
-        // this.boxColliderPositionOffset = [0, 0];
-        //
-        // this.active = true;
+
+        this.walkable = false;
+        this.dynamic = false;
+
+        this.step = [0, 0];
+
+        if(!Engine) {
+            console.error('GameObject.constructor: Engine class is not defined.');
+        }
+        else if(!(Engine.instance instanceof Engine)) {
+            console.error('GameObject.constructor: There is no Engine instance to subscribre to.');
+        }
+        else {
+            this.engine = Engine.instance;
+
+            if(subscribreToEngine) {
+                this.engine.registerCollisionCandidate(this);
+            }
+        }
     }
 
-    update(deltaTime) {
-        if(this.active) {
-            this.x += this.vx*deltaTime;
-            this.y += this.vy*deltaTime;
-        }
+    earlyUpdate(deltaTime) {
+        this.step[0] = this.vx*deltaTime;
+        this.step[1] = this.vy*deltaTime;
+    }
+
+    lateUpdate() {
+        this.x += this.step[0];
+        this.y += this.step[1];
     }
 
     get borderWidth() {
@@ -231,9 +248,13 @@ class GameObject extends ImageObject {
     }
 
     hasCollided(otherBorder) {
-        var myBorder = this.border;
+        const myBorder = this.border;
 
-        return (Math.min(myBorder.right, otherBorder.right) - Math.max(myBorder.left, otherBorder.left) >= 0) && (Math.min(myBorder.bottom, otherBorder.bottom) - Math.max(myBorder.top, otherBorder.top) >= 0);
+        return (Math.min(myBorder.right, otherBorder.right) - Math.max(myBorder.left, otherBorder.left) >= 0) && (Math.min(myBorder.top, otherBorder.top) - Math.max(myBorder.bottom, otherBorder.bottom) >= 0);
+    }
+
+    onCollision(otherGameObject) {
+
     }
 
     createCopy() {
@@ -256,6 +277,157 @@ class GameObject extends ImageObject {
         }
         else {
             console.error('GameObject.copyPropertiesTo: targetGameObject is not a GameObject instance.');
+        }
+    }
+}
+
+/**
+* @class
+*/
+class Player extends GameObject {
+    /**
+    * @constructor
+    */
+    constructor(
+        sprite,
+        subscribeToEngine = true,
+        subscribeToRender = true,
+        upKeys = [87, 38],
+        rightKeys = [68, 39],
+        downKeys = [83, 40],
+        leftKeys = [65, 37]
+    ) {
+        super(sprite, subscribeToRender, subscribeToEngine);
+
+        this.keyMap = new Map();
+
+        this.setKeyMap(upKeys, 'up');
+        this.setKeyMap(rightKeys, 'right');
+        this.setKeyMap(downKeys, 'down');
+        this.setKeyMap(leftKeys, 'left');
+
+        this.lastAction = 'none';
+
+        this.moveSpeed = 200;
+
+        this.walkable = true;
+        this.dynamic = true;
+
+        if(!Engine) {
+            console.error('Player.constructor: Engine class is not defined.');
+        }
+        else if(!(Engine.instance instanceof Engine)) {
+            console.error('Player.constructor: There is no Engine instance to subscribre to.');
+        }
+        else {
+            this.engine = Engine.instance;
+            if(subscribeToEngine) {
+                this.subscribeToEngine();
+            }
+        }
+    }
+
+    setKeyMap(keys, action) {
+        for(const key of keys) {
+            this.keyMap.set(key, action);
+        }
+    }
+
+    subscribeToEngine() {
+        this.engine.registerKeyEventCallback(this.handleKeyEvents.bind(this));
+        this.engine.registerUpdateCallback(this);
+    }
+
+    handleKeyEvents(event) {
+        if(event.keyCode && this.keyMap.has(event.keyCode)) {
+            let action = this.keyMap.get(event.keyCode);
+
+            if(event.type == 'keyup') {
+                action += 'Cancel';
+            }
+
+            this.performAction(action);
+        }
+    }
+
+    onCollisionCheck(otherGameObject) {
+        if(!otherGameObject.walkable) {
+            let myBorder;
+            const targetBorder = otherGameObject.border;
+
+            if(this.step[0] != 0) {
+                myBorder = this.border;
+                myBorder.left += this.step[0];
+                myBorder.right += this.step[0];
+
+                if(otherGameObject.hasCollided(myBorder)) {
+                    if(this.step[0] > 0) {
+                        this.step[0] += targetBorder.left - myBorder.right - 1;
+                    }
+                    else {
+                        this.step[0] += targetBorder.right - myBorder.left + 1;
+                    }
+                }
+            }
+
+            if(this.step[1] != 0) {
+                myBorder = this.border;
+                myBorder.top += this.step[1];
+                myBorder.bottom += this.step[1];
+
+                if(otherGameObject.hasCollided(myBorder)) {
+                    if(this.step[1] > 0) {
+                        this.step[1] += targetBorder.bottom - myBorder.top - 1;
+                    }
+                    else {
+                        this.step[1] += targetBorder.top - myBorder.bottom + 1;
+                    }
+                }
+            }
+        }
+    }
+
+    performAction(action = 'none') {
+        if(this.lastAction != action) {
+            switch (action) {
+                case 'up':
+                    this.vy = this.moveSpeed;
+                    break;
+                case 'upCancel':
+                    if(this.vy > 0) {
+                        this.vy = 0;
+                    }
+                    break;
+                case 'right':
+                    this.vx = this.moveSpeed;
+                    break;
+                case 'rightCancel':
+                    if(this.vx > 0) {
+                        this.vx = 0;
+                    }
+                    break;
+                case 'down':
+                    this.vy = -this.moveSpeed;
+                    break;
+                case 'downCancel':
+                    if(this.vy < 0) {
+                        this.vy = 0;
+                    }
+                    break;
+                case 'left':
+                    this.vx = -this.moveSpeed;
+                    break;
+                case 'leftCancel':
+                    if(this.vx < 0) {
+                        this.vx = 0;
+                    }
+                    break;
+                case 'none':
+                    break;
+                default:
+            }
+
+            this.lastAction = action;
         }
     }
 }

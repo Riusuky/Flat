@@ -14,7 +14,8 @@ class Engine {
         Engine.instance = this;
 
         this.lastTime = Date.now();
-        this.callbackSet = new Set();
+        this.gameObjectSet = new Set();
+        this.collisionCandidateSet = new Set();
         this.keyCallbackSet = new Set();
         this.mouseCallbackSet = new Set();
 
@@ -63,15 +64,35 @@ class Engine {
     }
 
     routine() {
-        const deltaTime = this.currentTime - this.lastTime;
+        const deltaTime = (this.currentTime - this.lastTime)/1000;
 
-        for(const callback of this.callbackSet) {
-            callback(deltaTime);
+        for(const gameObject of this.gameObjectSet) {
+            gameObject.earlyUpdate(deltaTime);
+        }
+
+        this.checkForCollisions();
+
+        for(const gameObject of this.gameObjectSet) {
+            gameObject.lateUpdate(deltaTime);
         }
 
         this.render.render();
 
+        this.lastTime = this.currentTime;
+
         requestAnimationFrame(this.routine.bind(this));
+    }
+
+    checkForCollisions() {
+        const gameObjects = [...this.collisionCandidateSet];
+
+        for(const dynamicObject of _.filter(gameObjects, 'dynamic')) {
+            for(const gameObject of gameObjects) {
+                if(gameObject != dynamicObject) {
+                    dynamicObject.onCollisionCheck(gameObject);
+                }
+            }
+        }
     }
 
     /**
@@ -80,15 +101,34 @@ class Engine {
     */
 
     /**
-    * @method registerRoutineCallback - add a callback to be invoked by the engine.
+    * @method registerUpdateCallback - add a callback to be invoked by the engine.
     * @param {routineCallback} callback
     */
-    registerRoutineCallback(callback) {
-        if(typeof callback == 'function') {
-            this.callbackSet.add(callback);
+    registerUpdateCallback(gameObject, registerCollisionCheck = true) {
+        if(!GameObject) {
+            console.error('Engine.registerUpdateCallback: GameObject class is not defined.');
+        }
+        else if(!(gameObject instanceof GameObject)) {
+            console.error('Engine.registerUpdateCallback: gameObject is not an instance of GameObject.');
         }
         else {
-            console.error('Engine.registerRoutineCallback: callback is not set as a function.');
+            this.gameObjectSet.add(gameObject);
+
+            if(registerCollisionCheck) {
+                this.collisionCandidateSet.add(gameObject);
+            }
+        }
+    }
+
+    registerCollisionCandidate(gameObject) {
+        if(!GameObject) {
+            console.error('Engine.registerUpdateCallback: GameObject class is not defined.');
+        }
+        else if(!(gameObject instanceof GameObject)) {
+            console.error('Engine.registerUpdateCallback: gameObject is not an instance of GameObject.');
+        }
+        else {
+            this.collisionCandidateSet.add(gameObject);
         }
     }
 

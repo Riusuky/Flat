@@ -216,7 +216,7 @@ class Render {
         this.context2D.strokeStyle = 'purple';
         this.context2D.lineWidth = 2;
 
-        for(const objectToRender of _.sortBy([...this.objectSet], 'layer')) {
+        for(const objectToRender of _.chain([...this.objectSet]).sortBy('y').reverse().sortBy('layer').value()) {
             if(objectToRender.mayRender()) {
                 objectSize = objectToRender.size;
                 this.context2D.drawImage(
