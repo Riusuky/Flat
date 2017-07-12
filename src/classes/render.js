@@ -226,15 +226,15 @@ class Render {
                     (objectSize[0]).toFixed(),
                     (objectSize[1]).toFixed()
                 );
+            }
 
-                if(this.drawBorders) {
-                    if(!GameObject) {
-                        console.error('Render.renderObjects: GameObject class not defined.');
-                    }
-                    else if((objectToRender instanceof GameObject)) {
-                        objectBorder = objectToRender.border;
-                        this.context2D.strokeRect(realOrigin[0] + objectBorder.left, realOrigin[1] - objectBorder.top, objectToRender.borderWidth, objectToRender.borderHeight);
-                    }
+            if(this.drawBorders) {
+                if(!GameObject) {
+                    console.error('Render.renderObjects: GameObject class not defined.');
+                }
+                else if((objectToRender instanceof GameObject) && objectToRender.active) {
+                    objectBorder = objectToRender.border;
+                    this.context2D.strokeRect(realOrigin[0] + objectBorder.left, realOrigin[1] - objectBorder.top, objectToRender.borderWidth, objectToRender.borderHeight);
                 }
             }
         }

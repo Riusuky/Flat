@@ -189,6 +189,8 @@ class GameObject extends ImageObject {
 
         this.step = [0, 0];
 
+        this.active = true;
+
         if(!Engine) {
             console.error('GameObject.constructor: Engine class is not defined.');
         }
@@ -199,9 +201,21 @@ class GameObject extends ImageObject {
             this.engine = Engine.instance;
 
             if(subscribreToEngine) {
-                this.engine.registerCollisionCandidate(this);
+                this.subscribreToEngine();
             }
         }
+    }
+
+    subscribreToEngine() {
+        this.engine.registerCollisionCandidate(this);
+    }
+
+    unsubscribreToEngine() {
+        this.engine.unregisterGameObject(this);
+    }
+
+    mayRender() {
+        return super.mayRender() && this.active;
     }
 
     earlyUpdate(deltaTime) {
@@ -312,19 +326,6 @@ class Player extends GameObject {
 
         this.walkable = true;
         this.dynamic = true;
-
-        if(!Engine) {
-            console.error('Player.constructor: Engine class is not defined.');
-        }
-        else if(!(Engine.instance instanceof Engine)) {
-            console.error('Player.constructor: There is no Engine instance to subscribre to.');
-        }
-        else {
-            this.engine = Engine.instance;
-            if(subscribeToEngine) {
-                this.subscribeToEngine();
-            }
-        }
     }
 
     setKeyMap(keys, action) {
@@ -333,9 +334,14 @@ class Player extends GameObject {
         }
     }
 
-    subscribeToEngine() {
+    subscribreToEngine() {
         this.engine.registerKeyEventCallback(this.handleKeyEvents.bind(this));
         this.engine.registerUpdateCallback(this);
+    }
+
+    unsubscribreToEngine() {
+        super.unsubscribreToEngine();
+        this.engine.unregisterKeyEventCallback(this.handleKeyEvents);
     }
 
     handleKeyEvents(event) {
@@ -388,7 +394,7 @@ class Player extends GameObject {
     }
 
     performAction(action = 'none') {
-        if(this.lastAction != action) {
+        if(this.active && (this.lastAction != action)) {
             switch (action) {
                 case 'up':
                     this.vy = this.moveSpeed;

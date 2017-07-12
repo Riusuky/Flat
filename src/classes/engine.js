@@ -66,13 +66,15 @@ class Engine {
     routine() {
         const deltaTime = (this.currentTime - this.lastTime)/1000;
 
-        for(const gameObject of this.gameObjectSet) {
+        const activeObjects = _.filter([...this.gameObjectSet], gameObject => gameObject.active);
+
+        for(const gameObject of activeObjects) {
             gameObject.earlyUpdate(deltaTime);
         }
 
         this.checkForCollisions();
 
-        for(const gameObject of this.gameObjectSet) {
+        for(const gameObject of activeObjects) {
             gameObject.lateUpdate(deltaTime);
         }
 
@@ -84,7 +86,7 @@ class Engine {
     }
 
     checkForCollisions() {
-        const gameObjects = [...this.collisionCandidateSet];
+        const gameObjects = _.filter([...this.collisionCandidateSet], gameObject => gameObject.active);
 
         for(const dynamicObject of _.filter(gameObjects, 'dynamic')) {
             for(const gameObject of gameObjects) {
@@ -132,6 +134,19 @@ class Engine {
         }
     }
 
+    unregisterGameObject(gameObject) {
+        if(!GameObject) {
+            console.error('Engine.registerUpdateCallback: GameObject class is not defined.');
+        }
+        else if(!(gameObject instanceof GameObject)) {
+            console.error('Engine.registerUpdateCallback: gameObject is not an instance of GameObject.');
+        }
+        else {
+            this.collisionCandidateSet.delete(gameObject);
+            this.gameObjectSet.delete(gameObject);
+        }
+    }
+
     registerKeyEventCallback(callback) {
         if(typeof callback == 'function') {
             this.keyCallbackSet.add(callback);
@@ -141,9 +156,27 @@ class Engine {
         }
     }
 
+    unregisterKeyEventCallback(callback) {
+        if(typeof callback == 'function') {
+            this.keyCallbackSet.delete(callback);
+        }
+        else {
+            console.error('Engine.registerKeyEventCallback: callback is not set as a function.');
+        }
+    }
+
     registerMouseEventCallback(callback) {
         if(typeof callback == 'function') {
             this.mouseCallbackSet.add(callback);
+        }
+        else {
+            console.error('Engine.registerMouseEventCallback: callback is not set as a function.');
+        }
+    }
+
+    unregisterMouseEventCallback(callback) {
+        if(typeof callback == 'function') {
+            this.mouseCallbackSet.delete(callback);
         }
         else {
             console.error('Engine.registerMouseEventCallback: callback is not set as a function.');
